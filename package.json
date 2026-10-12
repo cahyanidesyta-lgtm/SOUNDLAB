@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "node scripts/dev-server.js",
     "start": "node scripts/dev-server.js",
-    "build": "npm run test",
-    "test": "node --check assets/app.js && node --check assets/audio.js && node --check lib/server.js && node --check api/config.js && node --check api/auth.js && node --check api/experiments.js"
+    "build": "npm run test && node scripts/build.js",
+    "test": "node --check assets/app.js && node --check assets/audio.js && node --check lib/server.js && node --check api/config.js && node --check api/auth.js && node --check api/experiments.js && node --check scripts/build.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }
