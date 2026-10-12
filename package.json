@@ -1,0 +1,18 @@
+{
+  "name": "soundlab-virtual-laboratory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SOUNDLAB: Laboratorium virtual bunyi yang dapat di-deploy ke Vercel.",
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "start": "node scripts/dev-server.js",
+    "build": "npm run test",
+    "test": "node --check assets/app.js && node --check assets/audio.js && node --check lib/server.js && node --check api/config.js && node --check api/auth.js && node --check api/experiments.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#287A74"/>
+  <meta name="description" content="SOUNDLAB — laboratorium virtual bunyi interaktif: perambatan, frekuensi, cepat rambat, gema dan gaung."/>
+  <title>SOUNDLAB | Virtual Sound Laboratory</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg"/>
+  <link rel="icon" sizes="any" href="./assets/favicon.ico"/>
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png"/>
+  <link rel="manifest" href="./manifest.webmanifest"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./assets/style.css"/>
+  <script src="./assets/audio.js" defer></script>
+  <script src="./assets/app.js" defer></script>
+</head>
+<body>
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
+      <div class="brand"><img src="./assets/favicon.svg" alt="Ikon SOUNDLAB" width="44" height="44"/><div class="brand-text"><strong>SOUND<span>LAB</span></strong><small>VIRTUAL PHYSICS LAB</small></div></div>
+      <div class="sidebar-group"><span class="sidebar-label">MENU UTAMA</span>
+        <button class="nav-item active" data-page="dashboard" aria-current="page"><span class="nav-icon" data-i="home"></span>Beranda</button>
+        <button class="nav-item" data-page="labs"><span class="nav-icon" data-i="flask"></span>Laboratorium <span class="nav-count">4</span></button>
+        <button class="nav-item" data-page="history"><span class="nav-icon" data-i="history"></span>Riwayat Praktikum</button>
+      </div>
+      <div class="sidebar-group other"><span class="sidebar-label">LAINNYA</span>
+        <button class="nav-item" data-page="guide"><span class="nav-icon" data-i="book"></span>Panduan Pengguna</button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon" data-i="settings"></span>Pengaturan</button>
+      </div>
+      <div class="sidebar-bottom"><div class="sidebar-tip"><div class="tip-head"><span data-i="sparkles"></span><b>Belajar lebih seru!</b></div><p>Eksperimen bunyi secara langsung dengan visualisasi dan speaker perangkatmu.</p><button class="tip-button" data-action="quicklab">Mulai eksperimen <span data-i="arrow"></span></button></div>
+        <div class="sidebar-foot">© 2026 SOUNDLAB <span>•</span> Versi 1.0</div></div>
+    </aside>
+    <div class="shade" id="shade"></div>
+    <div class="workarea">
+      <header class="topbar"><div class="top-left"><button class="icon-button mobile-menu" data-action="menu" aria-label="Buka navigasi"><span data-i="menu"></span></button><span class="breadcrumb">Workspace <span>/</span> <b id="breadcrumb">Beranda</b></span></div><div class="top-right"><div class="connection" id="connection"><span class="status-dot"></span><span id="connection-text">Mode Demo</span></div><button class="icon-button" data-action="guide" aria-label="Buka panduan"><span data-i="help"></span></button><button class="account" data-action="account" aria-label="Akun"><span class="avatar" id="avatar">S</span><span class="account-label" id="account-label">Pengunjung</span><span data-i="chevron"></span></button></div></header>
+      <main id="main" class="main"></main>
+    </div>
+  </div>
+  <div class="audio-dock" id="audio-dock" aria-label="Generator bunyi"><div class="dock-title"><span class="dock-icon" data-i="volume"></span><div><b>Sound Generator</b><small id="dock-state">Siap digunakan</small></div></div><canvas id="dockWave" width="210" height="48" aria-label="Visualisasi bentuk gelombang"></canvas><span class="dock-frequency" id="dock-frequency">440 Hz</span><button class="dock-play" data-action="toggleaudio" id="dock-play" aria-label="Mulai atau hentikan bunyi"><span data-i="play"></span><span id="dock-play-label">Putar suara</span></button></div>
+  <div class="modal-backdrop hidden" id="account-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal"><button class="modal-close" data-action="closemodal" aria-label="Tutup"><span data-i="x"></span></button><div class="modal-logo"><img src="./assets/favicon.svg" alt="SOUNDLAB" width="42" height="42"/></div><h2 id="modal-title">Masuk ke SOUNDLAB</h2><p id="modal-desc">Masukkan identitas untuk menyimpan eksperimen.</p><form id="auth-form"><div class="field" id="name-field" hidden><label for="auth-name">Nama lengkap</label><input type="text" id="auth-name" maxlength="80" autocomplete="name" placeholder="Nama lengkapmu"/></div><div class="field"><label for="auth-email">Email</label><input type="email" id="auth-email" autocomplete="email" placeholder="nama@email.com" required/></div><div class="field" id="password-field" hidden><label for="auth-password">Kata sandi (minimal 8 karakter)</label><input type="password" id="auth-password" minlength="8" autocomplete="current-password" placeholder="••••••••"/></div><p id="auth-error" class="form-error" role="alert"></p><button type="submit" class="btn primary full" id="auth-submit">Masuk ke SOUNDLAB</button></form><button class="auth-toggle" id="auth-toggle" data-action="auth-toggle" hidden>Belum punya akun? Daftar</button><p class="auth-note" id="auth-note"></p></div></div>
+  <div class="toast-holder" id="toasts" aria-live="polite"></div>
+</body>
+</html>
