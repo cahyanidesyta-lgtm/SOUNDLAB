@@ -19,13 +19,14 @@
 - Ilustrasi ruang 3D konseptual dengan rotasi lewat pointer/touch.
 - Mikrofon opsional (HTTPS/localhost, izin pengguna) untuk menampilkan bentuk sinyal; **tidak dihubungkan ke speaker**.
 - Simpan riwayat praktikum, unduh CSV, cetak/simpan PDF menggunakan dialog print browser.
-- Login **mode demo** di browser saat Neon belum dikonfigurasi.
+- Halaman pertama wajib berupa login; dashboard dan laboratorium hanya tampil setelah sesi akun berhasil diverifikasi oleh server.
+- Form Masuk memakai email dan password; Buat Akun memakai nama, email, dan password. Neon PostgreSQL adalah sumber autentikasi.
 - API serverless untuk login/registrasi, kelas guru/siswa dan eksperimen ke Neon PostgreSQL setelah konfigurasi env.
 - Favicon, logo SVG, icon PNG, serta manifest aplikasi.
 
 ## Cara menjalankan secara lokal
 
-**Kebutuhan:** Node.js 20+; tidak perlu instalasi framework untuk mode demo.
+**Kebutuhan:** Node.js 22+. Untuk menguji login, siapkan database Neon dan jalankan aplikasi melalui deployment Vercel yang menjalankan API serverless.
 
 ```bash
 cd SOUNDLAB
@@ -34,7 +35,7 @@ npm run dev
 
 Buka <http://localhost:3000>. Alternatif: jalankan `python -m http.server 3000` dari folder `SOUNDLAB`.
 
-**Catatan:** `npm run dev` menjalankan **mode demo**. Pada mode ini data tetap di localStorage browser. Fungsi `/api` terhubung dan autentikasi sungguhan baru tersedia setelah deploy di Vercel dengan Neon.
+**Catatan:** `npm run dev` cocok untuk memeriksa tampilan frontend secara lokal, tetapi login sengaja tidak dapat dilewati. Autentikasi memerlukan endpoint `/api` yang aktif dan variabel lingkungan Neon yang valid.
 
 ## Hubungkan Neon PostgreSQL
 
@@ -53,7 +54,7 @@ Buka <http://localhost:3000>. Alternatif: jalankan `python -m http.server 3000` 
    node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
    ```
 
-4. Redeploy project di Vercel. Badge `Mode Demo` otomatis berubah menjadi `Neon Terhubung` jika environment variables valid.
+4. Redeploy project di Vercel. Status koneksi akun akan menunjukkan `Neon Terhubung` jika environment variables valid.
 5. Registrasi dengan email, nama dan password (min. 8 karakter). Kata sandi di-hash menggunakan `scrypt` di server; cookie sesi bertanda tangan bersifat HttpOnly dan SameSite=Lax.
 6. Pendaftaran publik membuat role `siswa`. Role `guru` hanya diberikan administrator setelah verifikasi identitas guru. Guru dapat membuat kelas dan melihat siswa serta hasil praktikum **yang tergabung dalam kelasnya**. Role `admin` dipertahankan untuk kompatibilitas, tetapi tidak memiliki dashboard admin.
 7. Panduan terperinci dan perintah peningkatan role ada di [`NEON_SETUP.md`](NEON_SETUP.md).
@@ -66,10 +67,10 @@ Buka <http://localhost:3000>. Alternatif: jalankan `python -m http.server 3000` 
 2. Masuk ke https://vercel.com/new dan import repository tersebut.
 3. Pilih Framework Preset **Other**. Karena ini aplikasi HTML/CSS/JavaScript statis, aktifkan Override Build Command lalu **kosongkan** Build Command, sebagaimana panduan Vercel untuk static site.
 4. Pastikan folder root proyek berisi `index.html`; tidak perlu output directory khusus.
-5. Deploy. Situs bisa digunakan dalam mode demo tanpa Neon.
+5. Deploy. Halaman login akan menjadi tampilan awal. Form aktif setelah Neon dan endpoint autentikasi siap.
 6. Jika menginginkan akun dan sinkronisasi database, ikuti bagian konfigurasi Neon di atas.
 
-`api/config.js`, `api/auth.js`, `api/classes.js`, `api/experiments.js` adalah Vercel Serverless Functions berbasis Node.js, menggunakan driver `@neondatabase/serverless`. Frontend tetap bisa dijalankan secara statis tanpa fungsi API; inilah alasan mode demo tersedia.
+`api/config.js`, `api/auth.js`, `api/classes.js`, `api/experiments.js` adalah Vercel Serverless Functions berbasis Node.js, menggunakan driver `@neondatabase/serverless`. Frontend dapat disajikan secara statis, tetapi gate login tetap mengunci dashboard sampai sesi server terverifikasi; karena itu fungsi API dan Neon harus aktif untuk menggunakan aplikasi.
 
 ## Pemeriksaan
 
@@ -78,7 +79,7 @@ npm run test
 npm run build
 ```
 
-Perintah tersebut memeriksa sintaks semua berkas JS. Pengujian browser interaktif selama pembuatan mencakup navigasi ke empat lab, slider dan rumus, audio, penyimpanan lokal, ekspor CSV, formulir login mode demo, pengaturan, dan tata letak mobile (hasil tanpa kesalahan JavaScript pada lingkungan uji). **Integrasi Neon production dan deployment Vercel belum diuji dengan akun/kredensial milik pengguna.** Tes otomatis kontrol akses memakai mock dan tidak menggantikan pengujian integrasi langsung.
+Perintah tersebut memeriksa sintaks semua berkas JS. Pengujian browser interaktif selama pembuatan mencakup navigasi ke empat lab, slider dan rumus, audio, penyimpanan lokal, ekspor CSV, form login awal, pendaftaran, penguncian workspace sebelum autentikasi, pengaturan, dan tata letak mobile (hasil tanpa kesalahan JavaScript pada lingkungan uji). **Integrasi Neon production dan deployment Vercel belum diuji dengan akun/kredensial milik pengguna.** Tes otomatis kontrol akses memakai mock dan tidak menggantikan pengujian integrasi langsung.
 
 ## Catatan ilmiah dan status MVP
 

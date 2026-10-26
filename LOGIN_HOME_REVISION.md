@@ -6,7 +6,10 @@
 - Tab Masuk/Buat akun hanya aktif ketika API autentikasi Neon tersedia.
 - Login/registrasi tidak lagi berpura-pura berhasil dalam mode demo ketika Neon belum terhubung.
 - Status koneksi akun terlihat di bagian atas halaman dan penjelasan kondisi tersedia di form.
-- Beranda tamu menampilkan ajakan masuk atau membuat akun tanpa menghapus empat laboratorium virtual yang sudah ada.
+- Halaman pertama langsung menampilkan form login layar penuh, bukan dashboard/beranda.
+- Workspace dan audio dock disembunyikan sampai sesi login terverifikasi.
+- Pengunjung yang belum masuk tidak dapat menutup form atau melewati autentikasi melalui klik latar maupun tombol Escape.
+- Setelah logout, pengguna kembali ke halaman login. Empat laboratorium virtual tetap dipertahankan setelah autentikasi.
 - Identitas pengguna tidak lagi dibaca sebagai sesi tepercaya dari `localStorage`; sesi diverifikasi melalui endpoint server dengan cookie HttpOnly.
 - Pendaftaran dari halaman publik selalu membuat role `siswa`. Role guru/admin harus ditetapkan melalui proses administrasi yang terpisah.
 - Desain form dan ajakan akun responsif untuk layar desktop maupun ponsel.
@@ -26,3 +29,9 @@ npm run build
 ```
 
 Build menjalankan pemeriksaan sintaks, tes role API, tes UI login/daftar, lalu menghasilkan folder `public/` untuk Vercel.
+
+## Alur halaman awal
+- Sesi valid dari server: langsung masuk ke workspace.
+- Belum login: form Masuk tampil sebagai halaman pertama.
+- Belum ada akun: pilih Buat Akun setelah layanan Neon aktif.
+- Neon/API belum siap: form menampilkan status konfigurasi dan tidak mengizinkan login demo.

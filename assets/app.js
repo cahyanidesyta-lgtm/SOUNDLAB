@@ -183,8 +183,8 @@ async function login(e){
    if(!data.user||!data.user.id||!data.user.role)throw new Error('Respons akun tidak valid. Silakan masuk kembali.');
    state.user=data.user;
    localStorage.removeItem('soundlab_user');
-   $('account-modal').classList.add('hidden');
    $('auth-form').reset();
+   syncAuthGate();
    if(state.configured)await loadHistory();
    state.classData=null;
    updateHeader();
@@ -197,7 +197,27 @@ async function login(e){
  }
 }
 function userDisplayName(user){return String(user?.name||'pengguna').trim().split(/\s+/)[0]||'pengguna';}
-async function logout(){if(state.configured){try{await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})})}catch(_){}}state.user=null;state.classData=null;state.page=state.page==='classes'?'dashboard':state.page;localStorage.removeItem('soundlab_user');if(state.configured){state.history=[];localStorage.removeItem('soundlab_history')}render();toast('Berhasil keluar dari akun.');}
+function syncAuthGate(){
+ const locked=!state.user;
+ document.body.classList.toggle('auth-locked',locked);
+ $('account-modal').classList.toggle('hidden',!locked);
+ if(locked)updateAuthModal(false);
+}
+async function logout(){
+ if(state.configured){
+   try{await fetch('/api/auth',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})})}catch(_){}
+ }
+ state.user=null;
+ state.authMode='login';
+ state.classData=null;
+ state.page='dashboard';
+ localStorage.removeItem('soundlab_user');
+ if(state.configured){state.history=[];localStorage.removeItem('soundlab_history')}
+ $('auth-form').reset();
+ syncAuthGate();
+ updateHeader();
+ render();
+}
 async function loadHistory(){
  if(!state.configured||!state.user)return;
  state.history=[];
@@ -236,8 +256,8 @@ async function initBackend(){
    localStorage.removeItem('soundlab_user');
    state.backendMessage='Layanan akun tidak dapat dihubungi. Periksa deployment Vercel dan konfigurasi Neon.';
  }
+ syncAuthGate();
  updateHeader();
- if(!$('account-modal').classList.contains('hidden'))updateAuthModal();
  if(state.page==='dashboard'||state.page==='history'||state.page==='settings')render();
 }
 async function micToggle(){if(state.recordedMic){sound.stopMic();state.recordedMic=false;render();toast('Mikrofon dimatikan.');return}try{await sound.startMic();state.recordedMic=true;render();toast('Mikrofon aktif untuk visualisasi. Tidak ada pemutaran balik ke speaker.')}catch(error){toast(error.message||'Izin mikrofon ditolak.')}}
@@ -247,9 +267,9 @@ let analyser=id==='micWave'?sound.micAnalyser:sound.playing?sound.analyser:null;
 ctx.beginPath();ctx.strokeStyle='#287A74';ctx.lineWidth=isDock?2:2.6;
 if(analyser){const data=new Uint8Array(analyser.fftSize);analyser.getByteTimeDomainData(data);for(let x=0;x<w;x++){const i=Math.min(data.length-1,Math.floor(x/w*data.length));const y=h/2+(data[i]/128-1)*(h*.43);if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}}else if(id==='micWave'){ctx.moveTo(0,h/2);ctx.lineTo(w,h/2)}else{for(let x=0;x<w;x++){const t=x/w*(Math.min(state.freq/90,13)*Math.PI*2)+phase;let v=state.wave==='square'?Math.sin(t)>=0?1:-1:state.wave==='triangle'?2/Math.PI*Math.asin(Math.sin(t)):state.wave==='sawtooth'?2*((t/(2*Math.PI))-Math.floor(.5+t/(2*Math.PI))):Math.sin(t);const y=h/2-v*(h*.40)*(state.amp/80);if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}}ctx.stroke()}
 function animate(){phase+=state.reduceMotion?0:.013;drawWave('waveCanvas');drawWave('dockWave',true);drawWave('micWave');requestAnimationFrame(animate)}
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-action], [data-page]');if(!b)return;if(b.dataset.page){navigate(b.dataset.page);return}const act=b.dataset.action;switch(act){case'menu':$('sidebar').classList.toggle('open');$('shade').classList.toggle('open');break;case'quicklab':navigate('labs',2);break;case'alllabs':navigate('labs');break;case'openlab':navigate('labs',b.dataset.lab);break;case'guide':navigate('guide');break;case'toggleaudio':await toggleAudio();break;case'echo':try{await sound.echo(state.wall,MATERIAL[state.material].r,state.freq,state.amp);toast('Pantulan suara diputar. Dengarkan efek penundaannya!')}catch(error){toast(error.message)}break;case'save':await saveSession();break;case'export':exportCSV();break;case'print':window.print();break;case'reloadclasses':await loadClasses();break;case'copycode':try{await navigator.clipboard.writeText(b.dataset.code);toast('Kode kelas tersalin.')}catch(_){toast('Salin kode yang terlihat secara manual.')}break;case'rotatereset':state.rotX=11;state.rotY=-10;if($('scene-world'))$('scene-world').style.transform='rotateX(11deg) rotateY(-10deg)';break;case'microphone':await micToggle();break;case'account':openModal(b.dataset.authMode||'login');break;case'auth-mode':state.authMode=b.dataset.mode==='register'?'register':'login';$('auth-password').value='';updateAuthModal();if(state.configured)$(state.authMode==='register'?'auth-name':'auth-email').focus();break;case'closemodal':$('account-modal').classList.add('hidden');break;case'clearhistory':if(confirm('Yakin ingin menghapus riwayat demo?')){if(state.configured){toast('Riwayat Neon tidak bisa dihapus sekaligus dari menu ini.');return}state.history=[];localStorage.removeItem('soundlab_history');render();toast('Riwayat demo telah dihapus.')}break;case'delete':if(confirm('Hapus eksperimen ini?')){const id=b.dataset.id;if(state.configured){const response=await fetch('/api/experiments?id='+encodeURIComponent(id),{method:'DELETE'});if(!response.ok){toast('Gagal menghapus di Neon.');return;}}state.history=state.history.filter(x=>x.id!==id);localStorage.setItem('soundlab_history',JSON.stringify(state.history));render();toast('Data berhasil dihapus.')}break;}});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-action], [data-page]');if(!b)return;if(b.dataset.page){navigate(b.dataset.page);return}const act=b.dataset.action;switch(act){case'menu':$('sidebar').classList.toggle('open');$('shade').classList.toggle('open');break;case'quicklab':navigate('labs',2);break;case'alllabs':navigate('labs');break;case'openlab':navigate('labs',b.dataset.lab);break;case'guide':navigate('guide');break;case'toggleaudio':await toggleAudio();break;case'echo':try{await sound.echo(state.wall,MATERIAL[state.material].r,state.freq,state.amp);toast('Pantulan suara diputar. Dengarkan efek penundaannya!')}catch(error){toast(error.message)}break;case'save':await saveSession();break;case'export':exportCSV();break;case'print':window.print();break;case'reloadclasses':await loadClasses();break;case'copycode':try{await navigator.clipboard.writeText(b.dataset.code);toast('Kode kelas tersalin.')}catch(_){toast('Salin kode yang terlihat secara manual.')}break;case'rotatereset':state.rotX=11;state.rotY=-10;if($('scene-world'))$('scene-world').style.transform='rotateX(11deg) rotateY(-10deg)';break;case'microphone':await micToggle();break;case'account':openModal(b.dataset.authMode||'login');break;case'auth-mode':state.authMode=b.dataset.mode==='register'?'register':'login';$('auth-password').value='';updateAuthModal();if(state.configured)$(state.authMode==='register'?'auth-name':'auth-email').focus();break;case'closemodal':if(state.user)$('account-modal').classList.add('hidden');break;case'clearhistory':if(confirm('Yakin ingin menghapus riwayat demo?')){if(state.configured){toast('Riwayat Neon tidak bisa dihapus sekaligus dari menu ini.');return}state.history=[];localStorage.removeItem('soundlab_history');render();toast('Riwayat demo telah dihapus.')}break;case'delete':if(confirm('Hapus eksperimen ini?')){const id=b.dataset.id;if(state.configured){const response=await fetch('/api/experiments?id='+encodeURIComponent(id),{method:'DELETE'});if(!response.ok){toast('Gagal menghapus di Neon.');return;}}state.history=state.history.filter(x=>x.id!==id);localStorage.setItem('soundlab_history',JSON.stringify(state.history));render();toast('Data berhasil dihapus.')}break;}});
 document.addEventListener('submit',submitClassForm);
 document.addEventListener('input',e=>{const key=e.target.dataset.param;if(!key)return;state[key]=['medium','wave','material'].includes(key)?e.target.value:Number(e.target.value);updateValues()});document.addEventListener('change',e=>{if(e.target.id==='reduce-motion'){state.reduceMotion=e.target.checked;localStorage.setItem('soundlab_reduce_motion',JSON.stringify(state.reduceMotion));motion()}});
-$('auth-form').addEventListener('submit',login);$('shade').addEventListener('click',()=>{$('sidebar').classList.remove('open');$('shade').classList.remove('open')});$('account-modal').addEventListener('click',e=>{if(e.target.id==='account-modal')$('account-modal').classList.add('hidden')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('account-modal').classList.add('hidden');$('sidebar').classList.remove('open');$('shade').classList.remove('open')}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&sound.playing){sound.stop();syncAudioUI()}});window.addEventListener('pagehide',()=>{sound.stop();sound.stopMic()});
+$('auth-form').addEventListener('submit',login);$('shade').addEventListener('click',()=>{$('sidebar').classList.remove('open');$('shade').classList.remove('open')});$('account-modal').addEventListener('click',e=>{if(e.target.id==='account-modal'&&state.user)$('account-modal').classList.add('hidden')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(state.user)$('account-modal').classList.add('hidden');$('sidebar').classList.remove('open');$('shade').classList.remove('open')}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&sound.playing){sound.stop();syncAudioUI()}});window.addEventListener('pagehide',()=>{sound.stop();sound.stopMic()});
 glyphs();render();animate();initBackend();
 })();

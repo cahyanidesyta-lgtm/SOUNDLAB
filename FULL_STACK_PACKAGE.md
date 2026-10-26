@@ -22,7 +22,7 @@ npm run build
 npm run dev
 ```
 
-`npm test` dan `npm run build` sudah dijalankan sebelum paket dibuat dan lulus. `npm run dev` adalah mode demo lokal; API Neon sungguhan aktif setelah deployment Vercel dengan variabel lingkungan yang benar. Koneksi Neon dan deployment pada akun pengguna belum diuji karena memerlukan akses akun pemilik.
+`npm test` dan `npm run build` sudah dijalankan sebelum paket dibuat dan lulus. Halaman awal mengharuskan login; autentikasi aktif setelah API Neon dan variabel lingkungan dikonfigurasi dengan benar di Vercel. Koneksi Neon dan deployment pada akun pengguna belum diuji karena memerlukan akses akun pemilik.
 
 ## Isi utama
 

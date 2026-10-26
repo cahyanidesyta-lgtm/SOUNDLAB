@@ -18,3 +18,10 @@ assert.doesNotMatch(app, /localStorage\.setItem\('soundlab_user'/, 'Profil login
 assert.match(css, /\.auth-promo/, 'Beranda harus memiliki CTA akun');
 assert.match(css, /\.auth-modal/, 'Form autentikasi harus memiliki gaya responsif');
 console.log('Tes UI login/daftar lulus: email+password untuk masuk, nama+email+password untuk daftar, Neon sebagai sumber sesi.');
+
+assert.match(html, /<body class="auth-locked">/, 'Halaman awal harus dikunci di halaman autentikasi');
+assert.match(html, /class="modal-backdrop auth-entry" id="account-modal"/, 'Form autentikasi harus tampil sebagai halaman awal, bukan modal opsional');
+assert.doesNotMatch(html, /data-action="closemodal"/, 'Halaman login awal tidak boleh memiliki tombol untuk melewati autentikasi');
+assert.match(css, /\.auth-locked \.shell,\s*\.auth-locked \.audio-dock/, 'Workspace dan audio dock harus disembunyikan sebelum login');
+assert.match(app, /function syncAuthGate\(\)/, 'Alur autentikasi harus mengunci atau membuka workspace dari status sesi server');
+assert.match(app, /if\(e\.key==='Escape'\)\{if\(state\.user\)/, 'Tombol Escape tidak boleh melewati halaman login');
