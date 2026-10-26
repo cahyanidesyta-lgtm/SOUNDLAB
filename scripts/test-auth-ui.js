@@ -1,0 +1,20 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const html = fs.readFileSync('index.html', 'utf8');
+const app = fs.readFileSync('assets/app.js', 'utf8');
+const css = fs.readFileSync('assets/style.css', 'utf8');
+
+assert.match(html, /id="auth-name"/, 'Form registrasi harus menyediakan nama');
+assert.match(html, /id="auth-email"/, 'Form harus menyediakan email');
+assert.match(html, /<input[^>]*type="password"[^>]*id="auth-password"/, 'Form harus menyediakan password');
+assert.match(html, /data-mode="login"/, 'Pilihan Masuk harus tersedia');
+assert.match(html, /data-mode="register"/, 'Pilihan Buat Akun harus tersedia');
+assert.match(app, /registration\?\{name\}:\{\}/, 'Nama hanya dikirim pada proses registrasi');
+assert.match(app, /backendChecked&&state\.configured/, 'Form harus menunggu layanan Neon aktif');
+assert.match(app, /state\.user=null/, 'Identitas awal tidak boleh dipercaya dari localStorage');
+assert.doesNotMatch(app, /else user=\{name,email,role:'demo'\}/, 'Login palsu lokal tidak boleh menggantikan Neon');
+assert.doesNotMatch(app, /localStorage\.setItem\('soundlab_user'/, 'Profil login tidak boleh dipercaya dari localStorage');
+assert.match(css, /\.auth-promo/, 'Beranda harus memiliki CTA akun');
+assert.match(css, /\.auth-modal/, 'Form autentikasi harus memiliki gaya responsif');
+console.log('Tes UI login/daftar lulus: email+password untuk masuk, nama+email+password untuk daftar, Neon sebagai sumber sesi.');

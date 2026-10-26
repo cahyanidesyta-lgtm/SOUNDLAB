@@ -37,7 +37,7 @@ const LABS=[
 ];
 const MEDIUM={air:{label:'Udara (20°C)',v:343},water:{label:'Air (cair)',v:1480},steel:{label:'Baja',v:5960},vacuum:{label:'Ruang hampa',v:0}};
 const MATERIAL={concrete:{label:'Beton',r:0.74},wood:{label:'Kayu',r:0.48},curtain:{label:'Tirai tebal',r:0.20}};
-const state={page:'dashboard',lab:2,freq:440,amp:25,wave:'sine',medium:'air',distance:20,temp:25,wall:45,material:'concrete',scenePaused:false,rotX:11,rotY:-10,authMode:'login',configured:false,user:readJSON('soundlab_user',null),history:readJSON('soundlab_history',[]),reduceMotion:readJSON('soundlab_reduce_motion',false),recordedMic:false,classData:null,classLoading:false,classError:''};
+const state={page:'dashboard',lab:2,freq:440,amp:25,wave:'sine',medium:'air',distance:20,temp:25,wall:45,material:'concrete',scenePaused:false,rotX:11,rotY:-10,authMode:'login',configured:false,backendChecked:false,backendMessage:'Memeriksa koneksi akun SOUNDLAB…',user:null,history:readJSON('soundlab_history',[]),reduceMotion:readJSON('soundlab_reduce_motion',false),recordedMic:false,classData:null,classLoading:false,classError:''};
 let drag=null,phase=0;const sound=window.soundEngine;
 function glyphs(scope=document){scope.querySelectorAll('[data-i]').forEach(el=>{el.innerHTML=icon(el.dataset.i)});}
 function toast(message){const el=document.createElement('div');el.className='toast';el.textContent=message;$('toasts').appendChild(el);setTimeout(()=>el.remove(),4200)}
@@ -46,7 +46,7 @@ function updateHeader(){
  document.querySelectorAll('[data-page]').forEach(b=>{const selected=b.dataset.page===state.page;b.classList.toggle('active',selected);if(selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  $('account-label').textContent=state.user?(state.user.name+' · '+(state.user.role==='guru'?'Guru':state.user.role==='siswa'?'Siswa':state.user.role)):'Pengunjung';$('avatar').textContent=(state.user?.name||'S').trim().charAt(0).toUpperCase();
  $('classes-nav').hidden=!(state.configured&&['siswa','guru'].includes(state.user?.role));
- $('connection-text').textContent=state.configured?'Neon Terhubung':'Mode Demo';
+ $('connection-text').textContent=state.configured?'Neon Terhubung':state.backendChecked?'Akun belum aktif':'Memeriksa Neon…';$('connection').classList.toggle('connection-offline',state.backendChecked&&!state.configured);$('connection').classList.toggle('connection-pending',!state.backendChecked);
 }
 function navigate(page,lab){if(page==='classes'&&!(state.configured&&['siswa','guru'].includes(state.user?.role))){toast('Masuk sebagai siswa atau guru untuk melihat kelas.');return;}if(lab)state.lab=Number(lab);state.page=page;$('sidebar').classList.remove('open');$('shade').classList.remove('open');updateHeader();render();if(page==='classes')loadClasses();window.scrollTo({top:0,behavior:'smooth'})}
 function illustration(id){const common=`fill="none" stroke="#287A74" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
@@ -59,6 +59,7 @@ function metric(ic,color,value,label){return `<div class="metric"><span class="m
 const dateString=()=>new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
 function dashboard(){return `<div class="heading-row"><div><span class="eyebrow">DASHBOARD OVERVIEW</span><h1>Halo, ${esc(state.user?.name?.split(' ')[0]||'Penjelajah Bunyi')}! <span aria-hidden="true">👋</span></h1><p class="page-sub">Selamat datang di SOUNDLAB. Siap menemukan keajaiban di balik suara?</p></div><div class="date-pill">${icon('clock',15)} ${dateString()}</div></div>
 <section class="hero"><div class="hero-content"><span class="pill">${icon('sparkles',13)} VIRTUAL SOUND LABORATORY</span><h2>Belajar bunyi jadi <em>lebih nyata.</em></h2><p>Eksplorasi fenomena suara melalui eksperimen virtual interaktif. Atur frekuensi, lihat gelombangnya, dan dengarkan hasilnya!</p><button class="btn white" data-action="quicklab">Mulai Eksperimen ${icon('arrow',15)}</button></div><div class="hero-art"><svg class="hero-wave" viewBox="0 0 500 220" fill="none" aria-hidden="true"><path d="M1 110c30 0 30-10 60-10s30 48 60 48 30-130 60-130 30 183 60 183 30-144 60-144 30 69 60 69 30-24 60-24 30 8 78 8" stroke="#AEEED3" stroke-width="4"/><path d="M1 112c30 0 30-28 60-28s30 63 60 63 30-87 60-87 30 122 60 122 30-93 60-93 30 29 60 29 30-14 60-14 30 8 78 8" stroke="#FFF8B0" stroke-opacity=".64" stroke-width="2"/><g fill="#FFF8B0"><circle cx="181" cy="18" r="6"/><circle cx="300" cy="57" r="5"/></g></svg></div></section>
+${!state.user?`<section class="auth-promo" aria-labelledby="auth-promo-title"><div class="auth-promo-icon">${icon('shield',23)}</div><div class="auth-promo-copy"><span class="eyebrow">AKUN SOUNDLAB</span><h3 id="auth-promo-title">Simpan progres praktikum Anda</h3><p>${state.configured?'Masuk dengan email dan kata sandi atau buat akun siswa. Riwayat praktikum akan tersimpan di Neon PostgreSQL.':'Anda tetap dapat mencoba laboratorium sebagai tamu. Login dan pendaftaran akan aktif setelah koneksi Neon dikonfigurasi.'}</p></div><div class="auth-promo-actions"><button class="btn outline" data-action="account" data-auth-mode="login">Masuk</button><button class="btn primary" data-action="account" data-auth-mode="register">Buat akun</button></div></section>`:''}
 <section class="metrics">${metric('flask','green','04','Laboratorium tersedia')}${metric('history','yellow',String(state.history.length).padStart(2,'0'),'Eksperimen tersimpan')}${metric('headphones','mint',sound.playing?'ON':'OFF','Generator suara')}${metric('target','blue','100%','Interaktif & mandiri')}</section>
 <div class="section-top"><div><h2>Jelajahi Laboratorium</h2><p>Pilih topik yang ingin kamu eksplorasi hari ini.</p></div><button class="text-button" data-action="alllabs">Lihat semua ${icon('arrow',14)}</button></div><section class="lab-grid">${LABS.map(card).join('')}</section>
 <div class="lower-grid"><section class="panel"><div class="panel-heading"><h3>Generator Bunyi Digital</h3><span class="badge">${icon('waves',13)} Real-time audio</span></div>${generator()}</section><section class="panel"><div class="panel-heading"><h3>Cara Menggunakan SOUNDLAB</h3><button class="text-button" data-action="guide">Panduan ${icon('arrow',13)}</button></div><div class="steps"><div class="step"><span class="step-index">01</span><div><b>Pilih laboratorium</b><small>Temukan topik bunyi yang ingin dipelajari</small></div></div><div class="step"><span class="step-index">02</span><div><b>Atur parameter eksperimen</b><small>Geser slider dan perhatikan hasilnya</small></div></div><div class="step"><span class="step-index">03</span><div><b>Dengarkan dan amati</b><small>Aktifkan speaker dan simpan hasil</small></div></div></div><div class="info-line" style="margin-top:21px">${icon('light',16)} Gunakan headphone dengan volume rendah saat mencoba generator suara.</div></section></div>`}
@@ -109,7 +110,7 @@ async function submitClassForm(e){
  try{const body=create?{action:'create',name:field.value.trim()}:{action:'join',code:field.value.trim()};const response=await fetch('/api/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Gagal menyimpan kelas.');toast(create?'Kelas berhasil dibuat. Bagikan kode kepada siswa.':'Berhasil bergabung dengan kelas.');await loadClasses();}
  catch(error){toast(error.message);button.disabled=false;}
 }
-function settingsView(){return `<div class="heading-row"><div><span class="eyebrow">PREFERENCES</span><h1>Pengaturan SOUNDLAB</h1><p class="page-sub">Sesuaikan pengalaman simulasi dan kelola data lokalmu.</p></div></div><div class="panel" style="max-width:800px"><div class="panel-heading"><h3>Preferensi Aplikasi</h3>${icon('settings',20)}</div><div class="setting-row"><div><b>Mode penyimpanan</b><p>${state.configured?'Neon PostgreSQL dengan sesi login aman.':'Mode demo menyimpan data praktikum pada browser ini.'}</p></div><span class="badge">${state.configured?'Neon':'Demo lokal'}</span></div><div class="setting-row"><div><b>Kurangi animasi</b><p>Mengurangi gerakan pada ilustrasi gelombang.</p></div><input type="checkbox" id="reduce-motion" ${state.reduceMotion?'checked':''} aria-label="Kurangi animasi" style="width:18px;height:18px;accent-color:var(--pine)"/></div><div class="setting-row"><div><b>Pengguna saat ini</b><p>${state.user?esc(state.user.email):'Belum masuk — kamu bisa menggunakan aplikasi sebagai tamu.'}</p></div><button class="btn outline" data-action="account">${icon('user',15)} ${state.user?'Akun':'Masuk'}</button></div><div class="setting-row"><div><b>Hapus riwayat demo</b><p>Menghapus semua eksperimen yang disimpan pada browser ini.</p></div><button class="btn danger" data-action="clearhistory">${icon('trash',14)} Hapus data</button></div></div>`}
+function settingsView(){return `<div class="heading-row"><div><span class="eyebrow">PREFERENCES</span><h1>Pengaturan SOUNDLAB</h1><p class="page-sub">Sesuaikan pengalaman simulasi dan kelola data lokalmu.</p></div></div><div class="panel" style="max-width:800px"><div class="panel-heading"><h3>Preferensi Aplikasi</h3>${icon('settings',20)}</div><div class="setting-row"><div><b>Mode penyimpanan</b><p>${state.configured?'Akun dan riwayat praktikum menggunakan Neon PostgreSQL.':state.backendChecked?'Laboratorium dapat digunakan sebagai tamu; login dan sinkronisasi akun memerlukan koneksi Neon.':'Sedang memeriksa koneksi Neon PostgreSQL.'}</p></div><span class="badge">${state.configured?'Neon':state.backendChecked?'Tamu':'Memeriksa'}</span></div><div class="setting-row"><div><b>Kurangi animasi</b><p>Mengurangi gerakan pada ilustrasi gelombang.</p></div><input type="checkbox" id="reduce-motion" ${state.reduceMotion?'checked':''} aria-label="Kurangi animasi" style="width:18px;height:18px;accent-color:var(--pine)"/></div><div class="setting-row"><div><b>Pengguna saat ini</b><p>${state.user?esc(state.user.email):'Belum masuk — kamu bisa menggunakan aplikasi sebagai tamu.'}</p></div><button class="btn outline" data-action="account">${icon('user',15)} ${state.user?'Akun':'Masuk'}</button></div><div class="setting-row"><div><b>Hapus riwayat demo</b><p>Menghapus semua eksperimen yang disimpan pada browser ini.</p></div><button class="btn danger" data-action="clearhistory">${icon('trash',14)} Hapus data</button></div></div>`}
 function render(){const main=$('main');main.innerHTML=state.page==='dashboard'?dashboard():state.page==='labs'?labView():state.page==='history'?historyView():state.page==='classes'?classesView():state.page==='guide'?guideView():settingsView();updateHeader();syncAudioUI();if(state.reduceMotion)document.documentElement.style.setProperty('--motion-factor','0');initSceneDrag();}
 function syncAudioUI(){const on=sound.playing;$('dock-state').textContent=on?'Audio sedang diputar':'Siap digunakan';$('dock-frequency').textContent=`${state.freq} Hz`;$('dock-play').innerHTML=`${icon(on?'pause':'play',13)} <span id="dock-play-label">${on?'Hentikan':'Putar suara'}</span>`;document.querySelectorAll('[data-action="toggleaudio"]').forEach(btn=>{if(btn.id==='dock-play')return;btn.innerHTML=`${icon(on?'pause':'play',14)} ${on?'Hentikan bunyi':'Putar bunyi'}`});}
 function updateValues(){document.querySelectorAll('[data-out]').forEach(el=>{const k=el.dataset.out;el.textContent=`${state[k]} ${({freq:'Hz',amp:'%',distance:'m',temp:'°C',wall:'m'})[k]||''}`});if(state.page==='labs'){
@@ -127,15 +128,118 @@ async function saveSession(){const item=sessionData();if(state.configured&&!stat
 function csvEscape(value){return `"${String(value??'').replaceAll('"','""')}"`}
 function exportCSV(){const rows=[['Lab','Waktu','Parameter','Hasil']];state.history.forEach(h=>rows.push([LABS[h.lab-1]?.title,h.timestamp,h.summary,h.result]));const csv='\uFEFF'+rows.map(row=>row.map(csvEscape).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download='SOUNDLAB-riwayat-praktikum.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function toggleAudio(){try{if(sound.playing)sound.stop();else{if(state.lab===1&&state.medium==='vacuum'&&state.page==='labs'){toast('Di ruang hampa bunyi tidak dapat merambat.');return;}await sound.start(state.freq,state.amp,state.wave);}syncAudioUI()}catch(e){toast(e.message||'Tidak bisa memulai audio.')}}
-function openModal(){if(state.user){if(confirm(`Keluar dari akun ${state.user.name}?`))logout();return;}$('account-modal').classList.remove('hidden');state.authMode='login';updateAuthModal();$('auth-email').focus()}
-function updateAuthModal(){const demo=!state.configured,registration=state.authMode==='register';$('modal-title').textContent=demo?'Masuk Mode Demo':registration?'Buat Akun SOUNDLAB':'Masuk ke SOUNDLAB';$('modal-desc').textContent=demo?'Identitas lokal untuk pengalaman demo. Tidak ada autentikasi server.':registration?'Daftar sebagai siswa untuk menyimpan eksperimen.':'Masuk dengan akun Neon yang sudah dibuat.';$('name-field').hidden=!(demo||registration);$('password-field').hidden=demo;$('auth-name').required=demo||registration;$('auth-password').required=!demo;$('auth-submit').textContent=demo?'Masuk ke Demo':registration?'Daftar akun':'Masuk';$('auth-toggle').hidden=demo;$('auth-toggle').textContent=registration?'Sudah punya akun? Masuk':'Belum punya akun? Daftar';$('auth-note').textContent=demo?'Data akun dan praktikum demo disimpan hanya di browser ini. Untuk login sungguhan, hubungkan Neon di Vercel.':'Password diproses di server; akun siswa tersimpan di Neon PostgreSQL.';$('auth-error').textContent='';}
-async function login(e){e.preventDefault();const email=$('auth-email').value.trim().toLowerCase();const name=$('auth-name').value.trim()||email.split('@')[0];const pass=$('auth-password').value;$('auth-error').textContent='';try{
- let user;if(state.configured){const response=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:state.authMode,email,password:pass,name})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Gagal autentikasi');user=data.user;}else user={name,email,role:'demo'};
- state.user=user;localStorage.setItem('soundlab_user',JSON.stringify(user));$('account-modal').classList.add('hidden');$('auth-form').reset();if(state.configured)await loadHistory();state.classData=null;updateHeader();render();toast(`Selamat datang, ${user.name}!`);
- }catch(error){$('auth-error').textContent=error.message}}
+function openModal(mode='login'){
+ if(state.user){if(confirm(`Keluar dari akun ${state.user.name}?`))logout();return;}
+ state.authMode=mode==='register'?'register':'login';
+ $('account-modal').classList.remove('hidden');
+ updateAuthModal();
+ if(state.configured)$('auth-email').focus();
+}
+function updateAuthModal(clearError=true){
+ const registration=state.authMode==='register',available=state.backendChecked&&state.configured;
+ $('modal-title').textContent=registration?'Buat Akun SOUNDLAB':'Masuk ke SOUNDLAB';
+ $('modal-desc').textContent=registration?'Buat akun siswa untuk menyimpan dan membuka kembali riwayat praktikum.':'Masuk menggunakan email dan kata sandi akun SOUNDLAB Anda.';
+ $('name-field').hidden=!registration;
+ $('password-field').hidden=false;
+ $('auth-name').required=registration;
+ $('auth-name').disabled=!available;
+ $('auth-email').disabled=!available;
+ $('auth-password').disabled=!available;
+ $('auth-password').required=true;
+ $('auth-password').autocomplete=registration?'new-password':'current-password';
+ $('auth-password').minLength=8;
+ $('auth-submit').disabled=!available;
+ $('auth-submit').textContent=available?(registration?'Buat akun':'Masuk'):state.backendChecked?'Akun belum tersedia':'Memeriksa layanan…';
+ $('auth-switch').hidden=!available;
+ document.querySelectorAll('.auth-tab').forEach(tab=>{
+   const active=tab.dataset.mode===state.authMode;
+   tab.classList.toggle('active',active);
+   tab.setAttribute('aria-pressed',String(active));
+ });
+ $('auth-note').textContent=available
+   ?'Akun diverifikasi di server. Kata sandi tidak disimpan di browser dan pendaftaran baru selalu menggunakan role siswa.'
+   :state.backendChecked
+     ?(state.backendMessage||'Layanan akun belum siap. Periksa DATABASE_URL dan SESSION_SECRET pada pengaturan Vercel.')
+     :'Sedang memeriksa koneksi Neon PostgreSQL. Form akan aktif setelah layanan akun siap.';
+ if(clearError)$('auth-error').textContent='';
+}
+async function login(e){
+ e.preventDefault();
+ if(!state.backendChecked||!state.configured){
+   $('auth-error').textContent=state.backendMessage||'Layanan akun belum tersedia. Coba kembali setelah koneksi Neon aktif.';
+   return;
+ }
+ const email=$('auth-email').value.trim().toLowerCase();
+ const name=$('auth-name').value.trim();
+ const pass=$('auth-password').value;
+ const registration=state.authMode==='register';
+ $('auth-error').textContent='';
+ $('auth-submit').disabled=true;
+ $('auth-submit').textContent=registration?'Membuat akun…':'Memeriksa akun…';
+ try{
+   const response=await fetch('/api/auth',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:state.authMode,email,password:pass,...(registration?{name}:{})})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||'Autentikasi gagal. Silakan coba kembali.');
+   if(!data.user||!data.user.id||!data.user.role)throw new Error('Respons akun tidak valid. Silakan masuk kembali.');
+   state.user=data.user;
+   localStorage.removeItem('soundlab_user');
+   $('account-modal').classList.add('hidden');
+   $('auth-form').reset();
+   if(state.configured)await loadHistory();
+   state.classData=null;
+   updateHeader();
+   render();
+   toast(`Selamat datang, ${userDisplayName(state.user)}!`);
+ }catch(error){
+   $('auth-error').textContent=error.message||'Terjadi kesalahan saat menghubungi layanan akun.';
+ }finally{
+   if(!$('account-modal').classList.contains('hidden'))updateAuthModal(false);
+ }
+}
+function userDisplayName(user){return String(user?.name||'pengguna').trim().split(/\s+/)[0]||'pengguna';}
 async function logout(){if(state.configured){try{await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})})}catch(_){}}state.user=null;state.classData=null;state.page=state.page==='classes'?'dashboard':state.page;localStorage.removeItem('soundlab_user');if(state.configured){state.history=[];localStorage.removeItem('soundlab_history')}render();toast('Berhasil keluar dari akun.');}
-async function loadHistory(){if(!state.configured||!state.user)return;try{const response=await fetch('/api/experiments');if(response.ok){const data=await response.json();state.history=(data.items||[]).map(x=>({...x,lab:Number(x.lab)}));localStorage.setItem('soundlab_history',JSON.stringify(state.history))}}catch(_){toast('Tidak dapat mengambil data Neon saat ini.')}}
-async function initBackend(){try{const response=await fetch('/api/config',{cache:'no-store'});if(!response.ok)return;const c=await response.json();state.configured=Boolean(c.enabled);if(state.configured){const r=await fetch('/api/auth?action=me');if(r.ok){const data=await r.json();state.user=data.user||null;if(state.user){localStorage.setItem('soundlab_user',JSON.stringify(state.user));await loadHistory()}else{localStorage.removeItem('soundlab_user');localStorage.removeItem('soundlab_history');state.history=[]}}}}catch(_){/* Static GitHub Preview mode; API is optional. */}updateHeader();if(state.page==='dashboard'||state.page==='history'||state.page==='settings')render();}
+async function loadHistory(){
+ if(!state.configured||!state.user)return;
+ state.history=[];
+ try{
+   const response=await fetch('/api/experiments',{cache:'no-store',credentials:'same-origin'});
+   if(!response.ok)throw new Error('Riwayat belum dapat dimuat.');
+   const data=await response.json();
+   state.history=(data.items||[]).map(x=>({...x,lab:Number(x.lab)}));
+   localStorage.setItem('soundlab_history',JSON.stringify(state.history));
+ }catch(_){toast('Tidak dapat mengambil riwayat dari Neon saat ini.');}
+}
+async function initBackend(){
+ try{
+   const response=await fetch('/api/config',{cache:'no-store',credentials:'same-origin'});
+   if(!response.ok)throw new Error('API konfigurasi mengembalikan status '+response.status+'.');
+   const c=await response.json();
+   state.configured=Boolean(c.enabled);
+   state.backendChecked=true;
+   state.backendMessage=state.configured?'Neon PostgreSQL siap.':'Layanan akun belum aktif. Administrator perlu mengatur DATABASE_URL dan SESSION_SECRET di Vercel.';
+   if(state.configured){
+     const r=await fetch('/api/auth?action=me',{cache:'no-store',credentials:'same-origin'});
+     if(!r.ok)throw new Error('Tidak dapat memeriksa sesi akun.');
+     const data=await r.json();
+     state.user=data.user||null;
+     localStorage.removeItem('soundlab_user');
+     if(state.user)await loadHistory();
+     else{localStorage.removeItem('soundlab_history');state.history=[];}
+   }else{
+     state.user=null;
+     localStorage.removeItem('soundlab_user');
+   }
+ }catch(error){
+   state.backendChecked=true;
+   state.configured=false;
+   state.user=null;
+   localStorage.removeItem('soundlab_user');
+   state.backendMessage='Layanan akun tidak dapat dihubungi. Periksa deployment Vercel dan konfigurasi Neon.';
+ }
+ updateHeader();
+ if(!$('account-modal').classList.contains('hidden'))updateAuthModal();
+ if(state.page==='dashboard'||state.page==='history'||state.page==='settings')render();
+}
 async function micToggle(){if(state.recordedMic){sound.stopMic();state.recordedMic=false;render();toast('Mikrofon dimatikan.');return}try{await sound.startMic();state.recordedMic=true;render();toast('Mikrofon aktif untuk visualisasi. Tidak ada pemutaran balik ke speaker.')}catch(error){toast(error.message||'Izin mikrofon ditolak.')}}
 function motion(){const world=$('scene-world');if(world){world.classList.toggle('paused',state.reduceMotion);}}
 function drawWave(id,isDock=false){const canvas=$(id);if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#CDE3D7';ctx.lineWidth=.8;for(let x=0;x<w;x+=36){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=h/4){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
@@ -143,7 +247,7 @@ let analyser=id==='micWave'?sound.micAnalyser:sound.playing?sound.analyser:null;
 ctx.beginPath();ctx.strokeStyle='#287A74';ctx.lineWidth=isDock?2:2.6;
 if(analyser){const data=new Uint8Array(analyser.fftSize);analyser.getByteTimeDomainData(data);for(let x=0;x<w;x++){const i=Math.min(data.length-1,Math.floor(x/w*data.length));const y=h/2+(data[i]/128-1)*(h*.43);if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}}else if(id==='micWave'){ctx.moveTo(0,h/2);ctx.lineTo(w,h/2)}else{for(let x=0;x<w;x++){const t=x/w*(Math.min(state.freq/90,13)*Math.PI*2)+phase;let v=state.wave==='square'?Math.sin(t)>=0?1:-1:state.wave==='triangle'?2/Math.PI*Math.asin(Math.sin(t)):state.wave==='sawtooth'?2*((t/(2*Math.PI))-Math.floor(.5+t/(2*Math.PI))):Math.sin(t);const y=h/2-v*(h*.40)*(state.amp/80);if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}}ctx.stroke()}
 function animate(){phase+=state.reduceMotion?0:.013;drawWave('waveCanvas');drawWave('dockWave',true);drawWave('micWave');requestAnimationFrame(animate)}
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-action], [data-page]');if(!b)return;if(b.dataset.page){navigate(b.dataset.page);return}const act=b.dataset.action;switch(act){case'menu':$('sidebar').classList.toggle('open');$('shade').classList.toggle('open');break;case'quicklab':navigate('labs',2);break;case'alllabs':navigate('labs');break;case'openlab':navigate('labs',b.dataset.lab);break;case'guide':navigate('guide');break;case'toggleaudio':await toggleAudio();break;case'echo':try{await sound.echo(state.wall,MATERIAL[state.material].r,state.freq,state.amp);toast('Pantulan suara diputar. Dengarkan efek penundaannya!')}catch(error){toast(error.message)}break;case'save':await saveSession();break;case'export':exportCSV();break;case'print':window.print();break;case'reloadclasses':await loadClasses();break;case'copycode':try{await navigator.clipboard.writeText(b.dataset.code);toast('Kode kelas tersalin.')}catch(_){toast('Salin kode yang terlihat secara manual.')}break;case'rotatereset':state.rotX=11;state.rotY=-10;if($('scene-world'))$('scene-world').style.transform='rotateX(11deg) rotateY(-10deg)';break;case'microphone':await micToggle();break;case'account':openModal();break;case'closemodal':$('account-modal').classList.add('hidden');break;case'auth-toggle':state.authMode=state.authMode==='login'?'register':'login';updateAuthModal();break;case'clearhistory':if(confirm('Yakin ingin menghapus riwayat demo?')){if(state.configured){toast('Riwayat Neon tidak bisa dihapus sekaligus dari menu ini.');return}state.history=[];localStorage.removeItem('soundlab_history');render();toast('Riwayat demo telah dihapus.')}break;case'delete':if(confirm('Hapus eksperimen ini?')){const id=b.dataset.id;if(state.configured){const response=await fetch('/api/experiments?id='+encodeURIComponent(id),{method:'DELETE'});if(!response.ok){toast('Gagal menghapus di Neon.');return;}}state.history=state.history.filter(x=>x.id!==id);localStorage.setItem('soundlab_history',JSON.stringify(state.history));render();toast('Data berhasil dihapus.')}break;}});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-action], [data-page]');if(!b)return;if(b.dataset.page){navigate(b.dataset.page);return}const act=b.dataset.action;switch(act){case'menu':$('sidebar').classList.toggle('open');$('shade').classList.toggle('open');break;case'quicklab':navigate('labs',2);break;case'alllabs':navigate('labs');break;case'openlab':navigate('labs',b.dataset.lab);break;case'guide':navigate('guide');break;case'toggleaudio':await toggleAudio();break;case'echo':try{await sound.echo(state.wall,MATERIAL[state.material].r,state.freq,state.amp);toast('Pantulan suara diputar. Dengarkan efek penundaannya!')}catch(error){toast(error.message)}break;case'save':await saveSession();break;case'export':exportCSV();break;case'print':window.print();break;case'reloadclasses':await loadClasses();break;case'copycode':try{await navigator.clipboard.writeText(b.dataset.code);toast('Kode kelas tersalin.')}catch(_){toast('Salin kode yang terlihat secara manual.')}break;case'rotatereset':state.rotX=11;state.rotY=-10;if($('scene-world'))$('scene-world').style.transform='rotateX(11deg) rotateY(-10deg)';break;case'microphone':await micToggle();break;case'account':openModal(b.dataset.authMode||'login');break;case'auth-mode':state.authMode=b.dataset.mode==='register'?'register':'login';$('auth-password').value='';updateAuthModal();if(state.configured)$(state.authMode==='register'?'auth-name':'auth-email').focus();break;case'closemodal':$('account-modal').classList.add('hidden');break;case'clearhistory':if(confirm('Yakin ingin menghapus riwayat demo?')){if(state.configured){toast('Riwayat Neon tidak bisa dihapus sekaligus dari menu ini.');return}state.history=[];localStorage.removeItem('soundlab_history');render();toast('Riwayat demo telah dihapus.')}break;case'delete':if(confirm('Hapus eksperimen ini?')){const id=b.dataset.id;if(state.configured){const response=await fetch('/api/experiments?id='+encodeURIComponent(id),{method:'DELETE'});if(!response.ok){toast('Gagal menghapus di Neon.');return;}}state.history=state.history.filter(x=>x.id!==id);localStorage.setItem('soundlab_history',JSON.stringify(state.history));render();toast('Data berhasil dihapus.')}break;}});
 document.addEventListener('submit',submitClassForm);
 document.addEventListener('input',e=>{const key=e.target.dataset.param;if(!key)return;state[key]=['medium','wave','material'].includes(key)?e.target.value:Number(e.target.value);updateValues()});document.addEventListener('change',e=>{if(e.target.id==='reduce-motion'){state.reduceMotion=e.target.checked;localStorage.setItem('soundlab_reduce_motion',JSON.stringify(state.reduceMotion));motion()}});
 $('auth-form').addEventListener('submit',login);$('shade').addEventListener('click',()=>{$('sidebar').classList.remove('open');$('shade').classList.remove('open')});$('account-modal').addEventListener('click',e=>{if(e.target.id==='account-modal')$('account-modal').classList.add('hidden')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('account-modal').classList.add('hidden');$('sidebar').classList.remove('open');$('shade').classList.remove('open')}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&sound.playing){sound.stop();syncAudioUI()}});window.addEventListener('pagehide',()=>{sound.stop();sound.stopMic()});
