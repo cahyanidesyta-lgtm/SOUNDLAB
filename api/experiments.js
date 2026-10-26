@@ -1,9 +1,11 @@
 'use strict';
 const {randomUUID}=require('node:crypto');
-const {enabled,sql,getSession,json,validateOrigin}=require('../lib/server');
+const {enabled,sql,getCurrentUser,json,validateOrigin}=require('../lib/server');
 module.exports=async(req,res)=>{
  if(!enabled())return json(res,503,{error:'Database belum dikonfigurasi.'});
- const user=getSession(req);if(!user)return json(res,401,{error:'Harus masuk terlebih dahulu.'});
+ let user;
+ try{user=await getCurrentUser(req)}catch(error){console.error('Session:',error);return json(res,500,{error:'Gagal memeriksa sesi pengguna.'})}
+ if(!user)return json(res,401,{error:'Harus masuk terlebih dahulu.'});
  const db=sql();
  try{
    if(req.method==='GET'){

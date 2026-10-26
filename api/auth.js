@@ -1,9 +1,9 @@
 'use strict';
 const {randomUUID}=require('node:crypto');
-const {enabled,sql,getSession,createSession,setCookie,clearCookie,json,validateOrigin,hashPassword,checkPassword}=require('../lib/server');
+const {enabled,sql,getCurrentUser,createSession,setCookie,clearCookie,json,validateOrigin,hashPassword,checkPassword}=require('../lib/server');
 module.exports=async(req,res)=>{
  if(!enabled())return json(res,503,{error:'Neon belum diatur. Isi DATABASE_URL dan SESSION_SECRET di Vercel.'});
- if(req.method==='GET'){if(req.query.action!=='me')return json(res,405,{error:'Action tidak valid'});const user=getSession(req);return json(res,200,{user:user?{id:user.id,name:user.name,email:user.email,role:user.role}:null})}
+ if(req.method==='GET'){if(req.query?.action!=='me')return json(res,405,{error:'Action tidak valid'});try{const user=await getCurrentUser(req);return json(res,200,{user:user?{id:user.id,name:user.name,email:user.email,role:user.role}:null})}catch(error){console.error('Session:',error);return json(res,500,{error:'Gagal memeriksa sesi pengguna.'})}}
  if(req.method!=='POST')return json(res,405,{error:'Method not allowed'});
  if(!validateOrigin(req))return json(res,403,{error:'Origin tidak diizinkan'});
  try{
