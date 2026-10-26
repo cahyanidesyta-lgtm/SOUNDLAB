@@ -20,7 +20,7 @@
 - Mikrofon opsional (HTTPS/localhost, izin pengguna) untuk menampilkan bentuk sinyal; **tidak dihubungkan ke speaker**.
 - Simpan riwayat praktikum, unduh CSV, cetak/simpan PDF menggunakan dialog print browser.
 - Login **mode demo** di browser saat Neon belum dikonfigurasi.
-- API serverless untuk login/registrasi dan eksperimen ke Neon PostgreSQL setelah konfigurasi env.
+- API serverless untuk login/registrasi, kelas guru/siswa dan eksperimen ke Neon PostgreSQL setelah konfigurasi env.
 - Favicon, logo SVG, icon PNG, serta manifest aplikasi.
 
 ## Cara menjalankan secara lokal
@@ -55,7 +55,8 @@ Buka <http://localhost:3000>. Alternatif: jalankan `python -m http.server 3000` 
 
 4. Redeploy project di Vercel. Badge `Mode Demo` otomatis berubah menjadi `Neon Terhubung` jika environment variables valid.
 5. Registrasi dengan email, nama dan password (min. 8 karakter). Kata sandi di-hash menggunakan `scrypt` di server; cookie sesi bertanda tangan bersifat HttpOnly dan SameSite=Lax.
-6. Pengguna yang mendaftar berperan `siswa`. Role `guru` dan `admin` sudah disiapkan pada basis data, namun dashboard pengelolaan kelas dan admin **belum diimplementasikan**.
+6. Pendaftaran publik membuat role `siswa`. Role `guru` hanya diberikan administrator setelah verifikasi identitas guru. Guru dapat membuat kelas dan melihat siswa serta hasil praktikum **yang tergabung dalam kelasnya**. Role `admin` dipertahankan untuk kompatibilitas, tetapi tidak memiliki dashboard admin.
+7. Panduan terperinci dan perintah peningkatan role ada di [`NEON_SETUP.md`](NEON_SETUP.md).
 
 **Penting:** Jangan pernah unggah `.env` atau connection string Neon ke GitHub. API login publik memerlukan rate limiting, reset password, verifikasi email, monitoring, dan proteksi tambahan sebelum digunakan secara luas di lingkungan sekolah.
 
@@ -68,7 +69,7 @@ Buka <http://localhost:3000>. Alternatif: jalankan `python -m http.server 3000` 
 5. Deploy. Situs bisa digunakan dalam mode demo tanpa Neon.
 6. Jika menginginkan akun dan sinkronisasi database, ikuti bagian konfigurasi Neon di atas.
 
-`api/config.js`, `api/auth.js`, `api/experiments.js` adalah Vercel Serverless Functions berbasis Node.js, menggunakan driver `@neondatabase/serverless`. Frontend tetap bisa dijalankan secara statis tanpa fungsi API; inilah alasan mode demo tersedia.
+`api/config.js`, `api/auth.js`, `api/classes.js`, `api/experiments.js` adalah Vercel Serverless Functions berbasis Node.js, menggunakan driver `@neondatabase/serverless`. Frontend tetap bisa dijalankan secara statis tanpa fungsi API; inilah alasan mode demo tersedia.
 
 ## Pemeriksaan
 
@@ -77,7 +78,7 @@ npm run test
 npm run build
 ```
 
-Perintah tersebut memeriksa sintaks semua berkas JS. Pengujian browser interaktif selama pembuatan mencakup navigasi ke empat lab, slider dan rumus, audio, penyimpanan lokal, ekspor CSV, formulir login mode demo, pengaturan, dan tata letak mobile (hasil tanpa kesalahan JavaScript pada lingkungan uji). **Integrasi Neon production dan deployment Vercel belum diuji dengan akun/kredensial milik pengguna.**
+Perintah tersebut memeriksa sintaks semua berkas JS. Pengujian browser interaktif selama pembuatan mencakup navigasi ke empat lab, slider dan rumus, audio, penyimpanan lokal, ekspor CSV, formulir login mode demo, pengaturan, dan tata letak mobile (hasil tanpa kesalahan JavaScript pada lingkungan uji). **Integrasi Neon production dan deployment Vercel belum diuji dengan akun/kredensial milik pengguna.** Tes otomatis kontrol akses memakai mock dan tidak menggantikan pengujian integrasi langsung.
 
 ## Catatan ilmiah dan status MVP
 
@@ -86,5 +87,5 @@ Perintah tersebut memeriksa sintaks semua berkas JS. Pengujian browser interakti
 - Lab 3 menggunakan perkiraan kecepatan bunyi di udara `v ≈ 331,3 + 0,606 T` dengan `T` dalam °C.
 - Lab 4 menggunakan delay model `t = 2d / v` dan refleksi sintetis berdasarkan material. Ini bukan model propagasi akustik 3D lengkap.
 - Amplitudo slider adalah rasio gain digital, **bukan tingkat suara terkalibrasi (dB SPL)**. Selalu gunakan volume perangkat yang rendah.
-- Belum ada LKPD, pretest/posttest, tugas kelas, laporan PDF khusus, atau dashboard guru. Fitur tersebut cocok untuk fase pengembangan berikutnya.
+- Dashboard kelas guru/siswa tersedia setelah menghubungkan Neon, dengan kode kelas dan pemantauan riwayat praktikum siswa yang tergabung. Belum ada LKPD, pretest/posttest, tugas kelas, laporan PDF khusus, atau dashboard admin.
 - Akses internet dibutuhkan untuk memuat font DM Sans/Manrope dari Google Fonts. Jika offline, font sistem digunakan sebagai fallback.
