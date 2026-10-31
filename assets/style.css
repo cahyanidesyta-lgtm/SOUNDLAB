@@ -40,6 +40,12 @@
 .auth-modal .field label{font-size:11px;color:#526f64;margin-bottom:7px}
 .auth-modal .field-hint{font-size:10px;color:#94a59c;font-weight:500}
 .auth-modal .field input{min-height:45px;border-radius:10px;border-color:#dce9e1;padding:12px 13px;font-size:12px}
+
+.auth-modal .password-input-wrap{position:relative;width:100%}
+.auth-modal .password-input-wrap input{width:100%;padding-right:48px}
+.auth-modal .password-toggle{position:absolute;top:50%;right:8px;transform:translateY(-50%);display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#71877e;cursor:pointer}
+.auth-modal .password-toggle:hover{background:#eef5f0;color:var(--pine)}
+.auth-modal .password-toggle:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .auth-modal .field input:disabled{background:#f5f7f5;color:#9baaa3}
 .auth-modal .form-error{min-height:0;line-height:1.5;margin:0 0 10px}
 .auth-modal .form-error:empty{display:none}

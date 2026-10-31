@@ -1,46 +1,60 @@
 # SOUNDLAB — Setup Neon PostgreSQL dan Role Siswa/Guru
 
-## 1. Buat database
+## 1. Buat database Neon (panduan pemula)
 
-1. Buka <https://console.neon.tech> dan buat project PostgreSQL untuk SOUNDLAB.
-2. Buka **SQL Editor**; pilih branch dan database proyek.
-3. Salin seluruh `database/schema.sql` lalu klik **Run**. Perintah menggunakan `IF NOT EXISTS` dan tidak menghapus data yang sudah ada.
-4. Di **Tables**, periksa empat tabel berikut:
+1. Buka <https://console.neon.tech> lalu **Sign up** atau **Log in**.
+2. Dari dashboard, klik **New Project** / **Create Project**.
+3. Isi nama project, misalnya `SOUNDLAB`. Pilih region yang paling dekat dengan mayoritas pengguna aplikasi, lalu klik **Create Project**. Biarkan pilihan database dan role bawaan jika belum ada kebutuhan khusus.
+4. Setelah project terbuka, pilih **SQL Editor** dari navigasi project.
+5. Pada pemilih di bagian atas SQL Editor, pastikan branch utama (biasanya `main` atau `production`) dan database bawaan project (biasanya `neondb`) sedang dipilih.
+6. Buka file `database/schema.sql` dari ZIP SOUNDLAB menggunakan editor teks. Salin seluruh isinya, tempel ke SQL Editor Neon, lalu klik **Run**.
+7. Buka menu **Tables** dan pastikan tabel `soundlab_users`, `soundlab_experiments`, `soundlab_classes`, dan `soundlab_class_students` sudah muncul.
+
+Script ini memakai `CREATE TABLE IF NOT EXISTS`, jadi dapat dijalankan ulang tanpa menghapus tabel atau data yang sudah ada. Tetap pilih project dan branch yang benar sebelum menjalankannya.
+
+## 2. Ambil alamat koneksi database
+
+1. Di Neon Console, buka project SOUNDLAB lalu klik **Connect**.
+2. Pilih branch, compute, database, dan role yang sama dengan tempat Anda menjalankan `schema.sql`.
+3. Biarkan **Connection pooling** aktif untuk aplikasi Vercel (alamat pooled biasanya memiliki teks `-pooler` pada hostname).
+4. Salin seluruh connection string PostgreSQL. Simpan sebagai rahasia; jangan kirim ke chat, screenshot, atau repository GitHub.
+
+## 3. Hubungkan ke Vercel
+
+1. Di Vercel, buka project SOUNDLAB → **Settings → Environment Variables**.
+2. Tambahkan variabel berikut untuk **Production** (tambahkan **Preview** juga bila ingin menguji deployment preview):
+
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | Connection string yang disalin dari Neon |
+   | `SESSION_SECRET` | String acak rahasia minimal 32 karakter; disarankan 64 karakter atau lebih |
+
+3. Untuk membuat `SESSION_SECRET` acak di komputer yang memiliki Node.js, jalankan:
+
+   ```bash
+   node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
+   ```
+
+   Salin hasilnya sebagai nilai `SESSION_SECRET`. Jangan gunakan password database sebagai `SESSION_SECRET`.
+4. Klik **Save**, lalu buka **Deployments** dan lakukan **Redeploy** pada deployment terbaru. Perubahan environment variable baru berlaku pada deployment berikutnya.
+5. Buka `https://ALAMAT-PROJECT-ANDA.vercel.app/api/config`. Jika konfigurasi benar, respons harus menunjukkan `enabled: true`.
+
+**Penting:** jangan menambahkan `DATABASE_URL` atau `SESSION_SECRET` ke file frontend, jangan menaruhnya di GitHub, dan jangan membagikan tangkapan layar yang menampilkan nilainya.
+
+## 4. Tabel database yang digunakan
 
    - `soundlab_users` — profil dan role (`siswa`, `guru`, dan `admin` yang dipertahankan untuk kompatibilitas).
    - `soundlab_experiments` — riwayat eksperimen milik masing-masing akun.
    - `soundlab_classes` — kelas buatan guru dan kode bergabung.
    - `soundlab_class_students` — hubungan siswa dengan kelas.
 
-## 2. Hubungkan ke Vercel
-
-1. Di Neon Console klik **Connect** dan salin connection string dari database yang benar.
-2. Di Vercel, buka project SOUNDLAB → **Settings → Environment Variables**.
-3. Tambahkan variabel **rahasia** berikut untuk `Production` (serta `Preview` jika memerlukan environment pengujian):
-
-   | Nama | Nilai |
-   |---|---|
-   | `DATABASE_URL` | connection string PostgreSQL dari Neon, termasuk `sslmode=require` jika disertakan |
-   | `SESSION_SECRET` | nilai acak panjang minimal 32 karakter (lebih baik 64+) |
-
-   Buat `SESSION_SECRET` di terminal lokal dengan perintah:
-
-   ```bash
-   node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
-   ```
-
-4. **Redeploy** Vercel agar variabel terbaca oleh API. Pakai endpoint `https://<alamat-app-anda>/api/config` untuk cek `enabled: true`.
-5. Jangan membagikan `DATABASE_URL`, `SESSION_SECRET`, screenshot yang menampilkan rahasia, atau menyimpannya dalam kode publik/GitHub.
-
-**Catatan:** Database dan variabel pada akun Neon/Vercel belum dibuat otomatis oleh berkas ini. Langkah tersebut memerlukan akses dari pemilik akun.
-
-## 3. Role siswa
+## 5. Role siswa
 
 - Siswa klik **Akun → Daftar**. Registrasi publik **selalu** menghasilkan role `siswa`, meskipun browser mencoba mengirim `guru`.
 - Siswa dapat menggunakan empat lab, menyimpan dan menghapus **riwayat pribadi**.
 - Menu **Kelas Saya → Gabung kelas**: masukkan kode 12 karakter yang guru bagikan.
 
-## 4. Role guru
+## 6. Role guru
 
 Untuk mencegah orang asing membuat akun guru, **pendaftaran guru publik dinonaktifkan**.
 
@@ -62,7 +76,7 @@ Untuk mencegah orang asing membuat akun guru, **pendaftaran guru publik dinonakt
 
 Role di server dibaca kembali dari Neon setiap kali ada permintaan API, sehingga mengganti role di database langsung mengubah izin. Role `admin` dari versi lama dipertahankan di schema, tetapi **tidak otomatis memiliki hak akses kelas**.
 
-## 5. Verifikasi di Neon SQL Editor
+## 7. Verifikasi di Neon SQL Editor
 
 ```sql
 SELECT role, COUNT(*) AS jumlah
@@ -77,14 +91,14 @@ ORDER BY c.created_at DESC;
 
 Gunakan akun **uji** siswa dan guru untuk mencoba registrasi, kode kelas, penyimpanan eksperimen dan pembatasan tampilan. Jangan memakai data pribadi siswa saat pertama kali menguji.
 
-## 6. Hal yang harus diamankan sebelum dipakai luas
+## 8. Hal yang harus diamankan sebelum dipakai luas
 
 - Tambahkan verifikasi email, alur reset password yang aman, rate limit/brute-force protection, monitoring dan kebijakan retensi data sebelum penggunaan sekolah secara luas.
 - Bagikan kode kelas hanya kepada siswa berwenang. Kode kelas adalah mekanisme pendaftaran kelas, bukan pengganti autentikasi.
 - Jangan memberikan role `guru` tanpa memeriksa identitas pemilik akun terlebih dahulu.
 - Jalankan script SQL terhadap branch pengujian Neon terlebih dahulu bila database produksi sudah berisi data penting.
 
-## 7. Tes lokal
+## 9. Tes lokal
 
 ```bash
 npm run test
