@@ -25,3 +25,8 @@ assert.doesNotMatch(html, /data-action="closemodal"/, 'Halaman login awal tidak 
 assert.match(css, /\.auth-locked \.shell,\s*\.auth-locked \.audio-dock/, 'Workspace dan audio dock harus disembunyikan sebelum login');
 assert.match(app, /function syncAuthGate\(\)/, 'Alur autentikasi harus mengunci atau membuka workspace dari status sesi server');
 assert.match(app, /if\(e\.key==='Escape'\)\{if\(state\.user\)/, 'Tombol Escape tidak boleh melewati halaman login');
+
+assert.doesNotMatch(html, /id="auth-switch"[^>]*hidden/, 'Pilihan masuk/daftar tidak boleh tersembunyi saat halaman awal dimuat');
+assert.doesNotMatch(html, /id="auth-submit" disabled/, 'Tombol login tidak boleh terkunci sebelum pemeriksaan API selesai');
+assert.match(app, /\$\('auth-email'\)\.disabled=false/, 'Kolom email harus tetap dapat diisi saat API belum siap');
+assert.match(app, /\$\('auth-submit'\)\.disabled=false/, 'Tombol submit harus tetap dapat digunakan untuk menampilkan pesan koneksi yang jelas');

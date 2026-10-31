@@ -133,7 +133,7 @@ function openModal(mode='login'){
  state.authMode=mode==='register'?'register':'login';
  $('account-modal').classList.remove('hidden');
  updateAuthModal();
- if(state.configured)$('auth-email').focus();
+ $('auth-email').focus();
 }
 function updateAuthModal(clearError=true){
  const registration=state.authMode==='register',available=state.backendChecked&&state.configured;
@@ -142,15 +142,16 @@ function updateAuthModal(clearError=true){
  $('name-field').hidden=!registration;
  $('password-field').hidden=false;
  $('auth-name').required=registration;
- $('auth-name').disabled=!available;
- $('auth-email').disabled=!available;
- $('auth-password').disabled=!available;
+ // Keep the form usable even when the API is unavailable; submit reports the real connection status.
+ $('auth-name').disabled=false;
+ $('auth-email').disabled=false;
+ $('auth-password').disabled=false;
  $('auth-password').required=true;
  $('auth-password').autocomplete=registration?'new-password':'current-password';
  $('auth-password').minLength=8;
- $('auth-submit').disabled=!available;
- $('auth-submit').textContent=available?(registration?'Buat akun':'Masuk'):state.backendChecked?'Akun belum tersedia':'Memeriksa layanan…';
- $('auth-switch').hidden=!available;
+ $('auth-submit').disabled=false;
+ $('auth-submit').textContent=available?(registration?'Buat akun':'Masuk'):registration?'Coba daftar':'Coba masuk';
+ $('auth-switch').hidden=false;
  document.querySelectorAll('.auth-tab').forEach(tab=>{
    const active=tab.dataset.mode===state.authMode;
    tab.classList.toggle('active',active);
@@ -160,13 +161,13 @@ function updateAuthModal(clearError=true){
    ?'Akun diverifikasi di server. Kata sandi tidak disimpan di browser dan pendaftaran baru selalu menggunakan role siswa.'
    :state.backendChecked
      ?(state.backendMessage||'Layanan akun belum siap. Periksa DATABASE_URL dan SESSION_SECRET pada pengaturan Vercel.')
-     :'Sedang memeriksa koneksi Neon PostgreSQL. Form akan aktif setelah layanan akun siap.';
+     :'Sedang memeriksa koneksi Neon PostgreSQL. Form tetap dapat diisi; autentikasi akan memberi pesan jika layanan belum siap.';
  if(clearError)$('auth-error').textContent='';
 }
 async function login(e){
  e.preventDefault();
  if(!state.backendChecked||!state.configured){
-   $('auth-error').textContent=state.backendMessage||'Layanan akun belum tersedia. Coba kembali setelah koneksi Neon aktif.';
+   $('auth-error').textContent=!state.backendChecked?'Koneksi akun masih diperiksa. Tunggu sebentar lalu coba lagi.':(state.backendMessage||'Layanan akun belum tersedia. Periksa konfigurasi Neon di Vercel.');
    return;
  }
  const email=$('auth-email').value.trim().toLowerCase();
